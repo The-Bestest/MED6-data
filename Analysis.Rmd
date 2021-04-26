@@ -33,7 +33,11 @@ load_bci_data <- function(fileNamePattern) {
 
 ## BCI - Continuous and Discrete Input
 
-```{r Load game data, results=FALSE}
+```{r Load pre-experiment questionnaire data, echo=FALSE, results='hide'}
+
+```
+
+```{r Load game data, echo=FALSE, results='hide'}
 game <- load_bci_data("*Game.csv")
 game <- game %>%
   # convert time to a proper Timestamp object
@@ -56,14 +60,14 @@ game <- game %>%
 game <- game[c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
 
-```{r Load meta data, results=FALSE}
+```{r Load meta data, echo=FALSE, results='hide'}
 meta <- load_bci_data("*Meta.csv")
 
 # Filter meta columns, add columns here on need-only basis
 meta <- meta[c("Participant", "Level", "Timestamp")]
 ```
 
-```{r Load sample data, results=FALSE}
+```{r Load sample data, echo=FALSE, results='hide'}
 sample <- load_bci_data("*Sample.csv")
 
 # Filter meta columns, add columns here on need-only basis
