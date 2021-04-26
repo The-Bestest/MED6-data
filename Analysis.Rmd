@@ -34,7 +34,21 @@ load_bci_data <- function(fileNamePattern) {
 ## BCI - Continuous and Discrete Input
 
 ```{r Load pre-experiment questionnaire data, echo=FALSE, results='hide'}
+preQuestionnaire <- as_tibble(read.csv(file.path("./data","preQuestionnaire.csv"),stringsAsFactors=FALSE)) %>%
+  mutate_if(is.character, stringr::str_replace_all, pattern = " ", replacement = "_")
+preQuestionnaire <- preQuestionnaire %>%
+  pivot_longer(cols = -X, names_to = "Participant") %>%
+  mutate_if(is.character, stringr::str_replace_all, pattern = " ", replacement = "_") %>%
+  mutate_if(is.character, stringr::str_replace_all, pattern = "P", replacement = "") %>%
+  mutate(Participant = as.numeric(Participant)) %>%
+  pivot_wider(names_from = X)
 
+```
+
+```{r Load post-experiment questionnaire data, echo=FALSE, results='hide'}
+postQuestionnaire <- as_tibble(read.csv(file.path("./data","postQuestionnaire.csv")))
+orderNumber <- rep(c(1,2,2,1),10)
+postQuestionnaire <- cbind(postQuestionnaire, orderNumber)
 ```
 
 ```{r Load game data, echo=FALSE, results='hide'}
