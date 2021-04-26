@@ -9,12 +9,12 @@ library(tidymodels)
 library(lubridate)  # for handling dates and time
 ```
 ```{r Define functions, include=FALSE}
-load_bci_data <- function(fileNamePattern) {
+load_bci_data <- function(fileNamePattern, columns) {
   # list all files in data folder, that end with "Game.csv"
   list.files(recursive=TRUE, path = "./data", pattern = fileNamePattern, full.names = T) %>%
     tibble(filename = .) %>%
     # load the contents of each CSV file
-    mutate(file_contents = map(filename, ~read_csv(file.path(.),na = "NULL"))) %>%
+    mutate(file_contents = map(filename, ~read_csv(file.path(.), na = "NULL", col_types = columns))) %>%
     # extract the nested columns into a flat table
     unnest(cols=-filename) %>%
     # extract the participant label and the condition ("Level") from the file path
@@ -52,7 +52,20 @@ postQuestionnaire <- cbind(postQuestionnaire, orderNumber)
 ```
 
 ```{r Load game data, echo=FALSE, results='hide'}
-game <- load_bci_data("*Game.csv")
+game_columns = cols(
+  .default = col_double(),
+  Event = col_character(),
+  Timestamp = col_datetime(format = ""),
+  SessionID = col_character(),
+  Email = col_character(),
+  BCIState = col_character(),
+  InputWindow = col_character(),
+  GameState = col_character(),
+  TrialResult = col_character(),
+  TrialGoal = col_character(),
+  BCIThresholdBuffer = col_character()
+)
+game <- load_bci_data("*Game.csv", game_columns)
 game <- game %>%
   # convert time to a proper Timestamp object
   dplyr::group_by(Participant, Level) %>%
@@ -75,15 +88,44 @@ game <- game[c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum"
 ```
 
 ```{r Load meta data, echo=FALSE, results='hide'}
-meta <- load_bci_data("*Meta.csv")
+meta_columns = cols(
+  SessionID = col_character(),
+  Timestamp = col_datetime(format = ""),
+  Framecount = col_double(),
+  Email = col_character(),
+  DeviceID = col_character(),
+  FabInputTrials = col_double(),
+  AccInputTrials = col_double(),
+  RejInputTrials = col_double(),
+  Trials = col_double(),
+  InterTrialInterval_sec = col_double(),
+  InputWindow_sec = col_double(),
+  noInputReceivedFabAlarm_sec = col_double(),
+  FabAlarmVariability_sec = col_double(),
+  ConfidenceThreshold = col_double(),
+  BCIProcessingMode = col_character(),
+  ConsecutiveThresholdBufferSize = col_double()
+)
+
+meta <- load_bci_data("*Meta.csv", meta_columns)
 
 # Filter meta columns, add columns here on need-only basis
 meta <- meta[c("Participant", "Level", "Timestamp")]
 ```
 
 ```{r Load sample data, echo=FALSE, results='hide'}
-sample <- load_bci_data("*Sample.csv")
+sample_columns = cols(
+  Event = col_character(),
+  Timestamp = col_datetime(format = ""),
+  Framecount = col_double(),
+  SessionID = col_character(),
+  Email = col_character(),
+  BCIConfidence = col_double(),
+  BCIState = col_character()
+)
+sample <- load_bci_data("*Sample.csv", sample_columns)
 
 # Filter meta columns, add columns here on need-only basis
 sample <- sample[c("Participant", "Level", "Event", "Timestamp", "BCIConfidence")]
 ```
+
