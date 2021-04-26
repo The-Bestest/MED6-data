@@ -6,6 +6,7 @@ output: html_notebook
 ```{r Load packages, include=FALSE}
 library(tidyverse)
 library(tidymodels)
+library(skimr)
 library(lubridate)  # for handling dates and time
 ```
 ```{r Define functions, include=FALSE}
@@ -83,6 +84,11 @@ game <- game %>%
   right_join(game) %>%
   mutate(TimeSinceIWstart = ifelse(TrialResult == "AccInput",Timestamp - StartTime,NA))
 
+gameSummary <- game %>%
+  dplyr::mutate(successes = ifelse(TrialResult == "AccInput", 1, 0)) %>%
+  dplyr::group_by(Participant, Level) %>%
+  dplyr::summarize(accPerc = sum(successes,na.rm = TRUE) / max(InputWindowNum), activateDelay = mean(TimeSinceIWstart,na.rm = TRUE))
+
 # Filter game columns, add columns here on need-only basis
 game <- game[c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
@@ -129,3 +135,11 @@ sample <- load_bci_data("*Sample.csv", sample_columns)
 sample <- sample[c("Participant", "Level", "Event", "Timestamp", "BCIConfidence")]
 ```
 
+```{r Merge all data, echo=FALSE, results='hide'}
+gameSummary <-gameSummary %>% merge(postQuestionnaire) %>% merge(preQuestionnaire)
+gameSummary <-merge(gameSummary,postQuestionnaire)
+gameSummary %>%
+  select(-Participant) %>%
+  group_by(Level) %>%
+  skim()
+```
