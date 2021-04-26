@@ -9,7 +9,7 @@ library(tidymodels)
 library(lubridate)  # for handling dates and time
 ```
 ```{r Define functions, include=FALSE}
-load_data <- function(fileNamePattern) {
+load_bci_data <- function(fileNamePattern) {
   # list all files in data folder, that end with "Game.csv"
   list.files(recursive=TRUE, path = "./data", pattern = fileNamePattern, full.names = T) %>%
     tibble(filename = .) %>%
@@ -20,25 +20,31 @@ load_data <- function(fileNamePattern) {
     # extract the participant label and the condition ("Level") from the file path
     separate(col=filename,sep="/",into=c("start","folder","Participant","Level","filename")) %>%
     # remove the leading "P" from participant label, e.g. P10 -> 10
-    mutate(Participant=as.numeric(str_replace(Participant,"P","")), Level=as.factor(Level)) %>%
-    # convert time to a proper Timestamp object
+    mutate(
+      Participant=as.numeric(str_replace(Participant,"P","")), Level=as.factor(Level),
+    ) %>%
     dplyr::group_by(Participant, Level) %>%
     mutate(
       vis_t_time = as.POSIXlt(Timestamp, format = "%Y-%m-%d %H:%M:%OS"),
-      Timestamp = seconds(vis_t_time),
-      GameIsOn = ifelse(Event == "GameRunning", 1, 0),
-      GameIsOn = cumsum(GameIsOn)) %>%
-      arrange(Participant,Level,Timestamp) %>%
-      dplyr::mutate(InputWindowNum = dplyr::lag(ifelse(Event == "GameDecision", 1, 0),default=0)) %>%
-      dplyr::mutate(InputWindowNum = cumsum(InputWindowNum)) %>%
-      ungroup()
+      Timestamp = seconds(vis_t_time)) %>%
+    ungroup()
 }
 ```
 
 ## BCI - Continuous and Discrete Input
 
 ```{r Load game data, results=FALSE}
-game <- load_data("*Game.csv")
+game <- load_bci_data("*Game.csv")
+game <- game %>%
+  # convert time to a proper Timestamp object
+  dplyr::group_by(Participant, Level) %>%
+  mutate(
+    GameIsOn = ifelse(Event == "GameRunning", 1, 0),
+    GameIsOn = cumsum(GameIsOn)) %>%
+    arrange(Participant,Level,Timestamp) %>%
+    dplyr::mutate(InputWindowNum = dplyr::lag(ifelse(Event == "GameDecision", 1, 0),default=0)) %>%
+    dplyr::mutate(InputWindowNum = cumsum(InputWindowNum)) %>%
+    ungroup()
 game <- game %>%
   select(Participant, Level, InputWindowNum,Timestamp) %>%
   dplyr::group_by(Participant, Level, InputWindowNum) %>%
@@ -46,9 +52,20 @@ game <- game %>%
   right_join(game) %>%
   mutate(TimeSinceIWstart = ifelse(TrialResult == "AccInput",Timestamp - StartTime,NA))
 
-# Add columns here on need-only basis
-game_data_columns = c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum")
-game <- game[game_data_columns]
+# Filter game columns, add columns here on need-only basis
+game <- game[c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
-We will first load game data from their respective CSVs and use their paths to figure out which participant and level they belong to.
-Because there are many columns loaded from the CSVs, we filter them here. It should make debugging more clear.
+
+```{r Load meta data, results=FALSE}
+meta <- load_bci_data("*Meta.csv")
+
+# Filter meta columns, add columns here on need-only basis
+meta <- meta[c("Participant", "Level", "Timestamp")]
+```
+
+```{r Load sample data, results=FALSE}
+sample <- load_bci_data("*Sample.csv")
+
+# Filter meta columns, add columns here on need-only basis
+sample <- sample[c("Participant", "Level", "Event", "Timestamp", "BCIConfidence")]
+```
