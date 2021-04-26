@@ -1,0 +1,8 @@
+# R stuff
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Generated files
+*.html
