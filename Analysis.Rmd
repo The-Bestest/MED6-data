@@ -137,8 +137,16 @@ sample <- sample[c("Participant", "Level", "Event", "Timestamp", "BCIConfidence"
 
 ```{r Merge all data, echo=FALSE, results='hide'}
 gameSummary <-gameSummary %>% merge(postQuestionnaire) %>% merge(preQuestionnaire)
-gameSummary <-merge(gameSummary,postQuestionnaire)
+gameSummary <- merge(gameSummary,postQuestionnaire)
+```
+
+```{r Overview}
 gameSummary %>%
+  select(-Participant) %>%
+  group_by(Level) %>%
+  skim()
+
+postQuestionnaire %>%
   select(-Participant) %>%
   group_by(Level) %>%
   skim()
