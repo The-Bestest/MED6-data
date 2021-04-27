@@ -155,6 +155,7 @@ gameSummary <-gameSummary %>% merge(postQuestionnaire) %>% merge(preQuestionnair
 gameSummary <- merge(gameSummary,postQuestionnaire)
 ```
 
+### 1. Distributions
 
 Overview of the game data and post questionnaire data for quick lookup of means, standard deviations, quantiles and histograms for every measured variable per each condition.
 ```{r Quick overview}
@@ -169,6 +170,60 @@ postQuestionnaire %>%
   skim()
 ```
 
+
+### 2. Unsystematic manipulations check
+
+```{r Parittion data}
+discrete_label <- "Body" # TODO: fix the label
+continuous_label <- "Blocks" # TODO: fix the label
+
+ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
+Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
+Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
+
+ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
+Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
+Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
+```
+
+Check parametric data for normality in order to find out whether we can use parametric analysis on them.
+```{r Check parametric data for normality}
+# Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
+# We don't need to check for variance with Levene's test, as Welch's test takes care of that.
+# https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
+
+# Is the date in each order parametric? YES if p > 0.05
+shapiro.test(ParticipantOrder1$accPerc)$p.value
+shapiro.test(ParticipantOrder2$accPerc)$p.value
+
+shapiro.test(ParticipantOrder1$PerceivedSuccesses)$p.value
+shapiro.test(ParticipantOrder2$PerceivedSuccesses)$p.value
+
+shapiro.test(ParticipantOrder1$ReportedAvgAttempts)$p.value
+shapiro.test(ParticipantOrder2$ReportedAvgAttempts)$p.value
+```
+```{r Counter balancing for performance - Randomization check}
+# Does it matter for performance if discrete first or not?
+t.test(ParticipantOrder1$accPerc, ParticipantOrder2$accPerc)
+# Does it matter for performance in discrete condition if discrete first or not?
+t.test(Discrete1$accPerc, Discrete2$accPerc)
+# Does it matter for performance in continuous condition if continuous first or not?
+t.test(Continuous1$accPerc, Continuous2$accPerc)
+
+# Does it matter for perceived performance if discrete first or not?
+t.test(ParticipantOrder1$PerceivedSuccesses, ParticipantOrder2$PerceivedSuccesses)
+# Does it matter for perceived performance in discrete condition if discrete first or not?
+t.test(Discrete1$PerceivedSuccesses, Discrete2$PerceivedSuccesses)
+# Does it matter for perceived performance in continuous condition if continuous first or not?
+t.test(Continuous1$PerceivedSuccesses, Continuous2$PerceivedSuccesses)
+
+# Does it matter for reported attempts if discrete first or not?
+t.test(ParticipantOrder1$ReportedAvgAttempts, ParticipantOrder2$ReportedAvgAttempts)
+# Does it matter for reported attempts in discrete condition if discrete first or not?
+t.test(Discrete1$ReportedAvgAttempts, Discrete2$ReportedAvgAttempts)
+# Does it matter for reported attempts in continuous condition if continuous first or not?
+t.test(Continuous1$ReportedAvgAttempts, Continuous2$ReportedAvgAttempts)
+```
 
 Correlation matrices for all data and per-condition data. Use this to find variable relationships you want to investigate further.
 ```{r Correlation}
@@ -193,6 +248,7 @@ for(condition in unique(gameSummary$Condition)) {
 Investigate the relationships closer.
 ```{r Investigate relationships}
 # Plot of SoA vs SoO, per-condition
+# TODO: make it possible to look at multiple variable pairs
 gameSummary %>%
   ggplot(aes(x = SoA, y = SoO, colour = Condition)) +
   geom_jitter() +
