@@ -8,27 +8,42 @@ library(tidyverse)
 library(tidymodels)
 library(skimr)
 library(lubridate)  # for handling dates and time
+library(Hmisc)    # correlation
+library(corrplot)
+library(PerformanceAnalytics)
+library(RColorBrewer)
+library(GGally)
 ```
 ```{r Define functions, include=FALSE}
 load_bci_data <- function(fileNamePattern, columns) {
-  # list all files in data folder, that end with "Game.csv"
+  # list all files in data folder, that end with filename pattern
   list.files(recursive=TRUE, path = "./data", pattern = fileNamePattern, full.names = T) %>%
     tibble(filename = .) %>%
     # load the contents of each CSV file
     mutate(file_contents = map(filename, ~read_csv(file.path(.), na = "NULL", col_types = columns))) %>%
     # extract the nested columns into a flat table
     unnest(cols=-filename) %>%
-    # extract the participant label and the condition ("Level") from the file path
-    separate(col=filename,sep="/",into=c("start","folder","Participant","Level","filename")) %>%
+    # extract the participant label and the Condition from the file path
+    separate(col=filename,sep="/",into=c("start","folder","Participant","Condition","filename")) %>%
     # remove the leading "P" from participant label, e.g. P10 -> 10
     mutate(
-      Participant=as.numeric(str_replace(Participant,"P","")), Level=as.factor(Level),
+      Participant=as.numeric(str_replace(Participant,"P","")), Condition=as.factor(Condition),
     ) %>%
-    dplyr::group_by(Participant, Level) %>%
+    dplyr::group_by(Participant, Condition) %>%
     mutate(
       vis_t_time = as.POSIXlt(Timestamp, format = "%Y-%m-%d %H:%M:%OS"),
       Timestamp = seconds(vis_t_time)) %>%
     ungroup()
+}
+
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
 }
 ```
 
@@ -69,28 +84,28 @@ game_columns = cols(
 game <- load_bci_data("*Game.csv", game_columns)
 game <- game %>%
   # convert time to a proper Timestamp object
-  dplyr::group_by(Participant, Level) %>%
+  dplyr::group_by(Participant, Condition) %>%
   mutate(
     GameIsOn = ifelse(Event == "GameRunning", 1, 0),
     GameIsOn = cumsum(GameIsOn)) %>%
-    arrange(Participant,Level,Timestamp) %>%
+    arrange(Participant,Condition,Timestamp) %>%
     dplyr::mutate(InputWindowNum = dplyr::lag(ifelse(Event == "GameDecision", 1, 0),default=0)) %>%
     dplyr::mutate(InputWindowNum = cumsum(InputWindowNum)) %>%
     ungroup()
 game <- game %>%
-  select(Participant, Level, InputWindowNum,Timestamp) %>%
-  dplyr::group_by(Participant, Level, InputWindowNum) %>%
+  select(Participant, Condition, InputWindowNum,Timestamp) %>%
+  dplyr::group_by(Participant, Condition, InputWindowNum) %>%
   dplyr::summarise(StartTime = min(Timestamp)) %>%
   right_join(game) %>%
   mutate(TimeSinceIWstart = ifelse(TrialResult == "AccInput",Timestamp - StartTime,NA))
 
 gameSummary <- game %>%
   dplyr::mutate(successes = ifelse(TrialResult == "AccInput", 1, 0)) %>%
-  dplyr::group_by(Participant, Level) %>%
+  dplyr::group_by(Participant, Condition) %>%
   dplyr::summarize(accPerc = sum(successes,na.rm = TRUE) / max(InputWindowNum), activateDelay = mean(TimeSinceIWstart,na.rm = TRUE))
 
 # Filter game columns, add columns here on need-only basis
-game <- game[c("Participant", "Level", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
+game <- game[c("Participant", "Condition", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
 
 ```{r Load meta data, echo=FALSE, results='hide'}
@@ -116,7 +131,7 @@ meta_columns = cols(
 meta <- load_bci_data("*Meta.csv", meta_columns)
 
 # Filter meta columns, add columns here on need-only basis
-meta <- meta[c("Participant", "Level", "Timestamp")]
+meta <- meta[c("Participant", "Condition", "Timestamp")]
 ```
 
 ```{r Load sample data, echo=FALSE, results='hide'}
@@ -132,7 +147,7 @@ sample_columns = cols(
 sample <- load_bci_data("*Sample.csv", sample_columns)
 
 # Filter meta columns, add columns here on need-only basis
-sample <- sample[c("Participant", "Level", "Event", "Timestamp", "BCIConfidence")]
+sample <- sample[c("Participant", "Condition", "Event", "Timestamp", "BCIConfidence")]
 ```
 
 ```{r Merge all data, echo=FALSE, results='hide'}
@@ -140,14 +155,46 @@ gameSummary <-gameSummary %>% merge(postQuestionnaire) %>% merge(preQuestionnair
 gameSummary <- merge(gameSummary,postQuestionnaire)
 ```
 
-```{r Overview}
+
+Overview of the game data and post questionnaire data for quick lookup of means, standard deviations, quantiles and histograms for every measured variable per each condition.
+```{r Quick overview}
 gameSummary %>%
   select(-Participant) %>%
-  group_by(Level) %>%
+  group_by(Condition) %>%
   skim()
 
 postQuestionnaire %>%
   select(-Participant) %>%
-  group_by(Level) %>%
+  group_by(Condition) %>%
   skim()
+```
+
+
+Correlation matrices for all data and per-condition data. Use this to find variable relationships you want to investigate further.
+```{r Correlation}
+# check out this web page on easy summaries for correlations:
+# http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
+filter_out = c(1,2,13,15) # columns to filter out
+
+# Correlation matrix between every question and performance
+chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
+
+# Data for per-condition correlation matrix between every question and performance
+res2 <- Hmisc::rcorr(as.matrix(gameSummary[,-filter_out]))
+flattenCorrMatrix(res2$r, res2$P)
+
+# Per-condition correlation matrix between every question and performance
+for(condition in unique(gameSummary$Condition)) {
+  corrplot(cor(gameSummary[gameSummary$Condition==condition,-filter_out]), type="upper",col=brewer.pal(n=8, name="RdYlBu"))
+}
+```
+
+
+Investigate the relationships closer.
+```{r Investigate relationships}
+# Plot of SoA vs SoO, per-condition
+gameSummary %>%
+  ggplot(aes(x = SoA, y = SoO, colour = Condition)) +
+  geom_jitter() +
+  geom_smooth(method = "lm", fill = NA)
 ```
