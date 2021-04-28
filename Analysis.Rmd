@@ -268,14 +268,21 @@ Investigate the interesting correlations further.
 ```
 
 ### 4. Test our hypothesis
+```{r Hypothesis checks}
+# TODO:
+```
+
 
 ### 5. Plotting ground
 
 ```{r Plot correlations}
-# Plot SoA vs SoO, per-condition
 # TODO: Make it pretty
 gameSummary %>%
   ggplot(aes(x = SoA, y = SoO, colour = Condition)) +
   geom_jitter() +
   geom_smooth(method = "lm", fill = NA)
+```
+
+```{r Plot boxplots}
+# TODO:
 ```
