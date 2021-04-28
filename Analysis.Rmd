@@ -195,19 +195,22 @@ normalityCheck <- gameSummary %>%
   )
 ```
 
-# Does it matter for performance if discrete first or not?
-t.test(ParticipantOrder1$accPerc, ParticipantOrder2$accPerc)
-# Does it matter for performance in discrete condition if discrete first or not?
-t.test(Discrete1$accPerc, Discrete2$accPerc)
-# Does it matter for performance in continuous condition if continuous first or not?
-t.test(Continuous1$accPerc, Continuous2$accPerc)
+```{r Counter balancing for parametric data - Randomization check}
+# Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
+parametricCheck <- gameSummary %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber) %>%
+  gather(key = variable, value = value, -Condition, -orderNumber) %>%
+  group_by(Condition, orderNumber, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(orderNumber, value) %>% 
+  group_by(variable)  %>%
+  rename(order1 = 3, order2 = 4) %>%
+  mutate(
+    p_value = t.test(unlist(order1), unlist(order2))$p.value,
+    statistic = t.test(unlist(order1), unlist(order2))$statistic
+  )
+```
 
-# Does it matter for perceived performance if discrete first or not?
-t.test(ParticipantOrder1$PerceivedSuccesses, ParticipantOrder2$PerceivedSuccesses)
-# Does it matter for perceived performance in discrete condition if discrete first or not?
-t.test(Discrete1$PerceivedSuccesses, Discrete2$PerceivedSuccesses)
-# Does it matter for perceived performance in continuous condition if continuous first or not?
-t.test(Continuous1$PerceivedSuccesses, Continuous2$PerceivedSuccesses)
 
 # Does it matter for reported attempts if discrete first or not?
 t.test(ParticipantOrder1$ReportedAvgAttempts, ParticipantOrder2$ReportedAvgAttempts)
