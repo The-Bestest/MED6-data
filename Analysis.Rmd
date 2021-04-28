@@ -212,12 +212,20 @@ parametricCheck <- gameSummary %>%
 ```
 
 
-# Does it matter for reported attempts if discrete first or not?
-t.test(ParticipantOrder1$ReportedAvgAttempts, ParticipantOrder2$ReportedAvgAttempts)
-# Does it matter for reported attempts in discrete condition if discrete first or not?
-t.test(Discrete1$ReportedAvgAttempts, Discrete2$ReportedAvgAttempts)
-# Does it matter for reported attempts in continuous condition if continuous first or not?
-t.test(Continuous1$ReportedAvgAttempts, Continuous2$ReportedAvgAttempts)
+```{r Counter balancing for non-parametric data - Randomization check}
+# Does it matter for our non-parametric data if discrete condition was first?
+nonParametricCheck <- gameSummary %>%
+  select(-Participant, -accPerc, -PerceivedSuccesses, -ReportedAvgAttempts, -activateDelay) %>%
+  gather(key = variable, value = value, -Condition, -orderNumber) %>%
+  group_by(Condition, orderNumber, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(orderNumber, value) %>% 
+  group_by(variable)  %>%
+  rename(order1 = 3, order2 = 4) %>%
+  mutate(
+    p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
+    statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
+  )
 ```
 
 Correlation matrices for all data and per-condition data. Use this to find variable relationships you want to investigate further.
