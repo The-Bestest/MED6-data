@@ -151,7 +151,9 @@ sample <- sample[c("Participant", "Condition", "Event", "Timestamp", "BCIConfide
 ```
 
 ```{r Merge all data, echo=FALSE, results='hide'}
-gameSummary <-gameSummary %>% merge(postQuestionnaire) %>% merge(preQuestionnaire)
+gameSummary <-gameSummary %>%
+  merge(postQuestionnaire) %>%
+  merge(preQuestionnaire)
 gameSummary <- merge(gameSummary,postQuestionnaire)
 ```
 
@@ -173,19 +175,6 @@ postQuestionnaire %>%
 
 ### 2. Unsystematic manipulations check
 
-```{r Parittion data}
-discrete_label <- "Body" # TODO: fix the label
-continuous_label <- "Blocks" # TODO: fix the label
-
-ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
-Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
-Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
-
-ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
-Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
-Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
-```
-
 Check parametric data for normality in order to find out whether we can use parametric analysis on them.
 ```{r Check parametric data for normality}
 # Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
@@ -193,16 +182,19 @@ Check parametric data for normality in order to find out whether we can use para
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
 # Is the date in each order parametric? YES if p > 0.05
-shapiro.test(ParticipantOrder1$accPerc)$p.value
-shapiro.test(ParticipantOrder2$accPerc)$p.value
 
-shapiro.test(ParticipantOrder1$PerceivedSuccesses)$p.value
-shapiro.test(ParticipantOrder2$PerceivedSuccesses)$p.value
-
-shapiro.test(ParticipantOrder1$ReportedAvgAttempts)$p.value
-shapiro.test(ParticipantOrder2$ReportedAvgAttempts)$p.value
+normalityCheck <- gameSummary %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber) %>%
+  gather(key = variable, value = value, -Condition, -orderNumber) %>%
+  group_by(Condition, orderNumber, variable) %>%
+  summarise(value=list(value)) %>%
+  group_by(variable) %>%
+  mutate(
+    p_value = shapiro.test(unlist(value))$p.value,
+    statistic = shapiro.test(unlist(value))$statistic
+  )
 ```
-```{r Counter balancing for performance - Randomization check}
+
 # Does it matter for performance if discrete first or not?
 t.test(ParticipantOrder1$accPerc, ParticipantOrder2$accPerc)
 # Does it matter for performance in discrete condition if discrete first or not?
