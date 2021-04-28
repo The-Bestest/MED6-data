@@ -247,6 +247,12 @@ for(condition in unique(gameSummary$Condition)) {
 }
 ```
 
+Investigate the interesting correlations further.
+```{r Correlation checks}
+# Template:
+# cor.test(VAR1, VAR2, method="spearman", exact = FALSE)
+```
+
 
 Investigate the relationships closer.
 ```{r Investigate relationships}
