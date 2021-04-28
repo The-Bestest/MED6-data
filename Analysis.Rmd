@@ -157,6 +157,17 @@ gameSummary <-gameSummary %>%
 gameSummary <- merge(gameSummary,postQuestionnaire)
 ```
 
+```{r Parittion data}
+discrete_label <- "Body" # TODO: fix the label
+continuous_label <- "Blocks" # TODO: fix the label
+ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
+Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
+Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
+ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
+Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
+Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
+```
+
 ### 1. Distributions
 
 Overview of the game data and post questionnaire data for quick lookup of means, standard deviations, quantiles and histograms for every measured variable per each condition.
@@ -181,8 +192,8 @@ Check parametric data for normality in order to find out whether we can use para
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
-# Is the date in each order parametric? YES if p > 0.05
-
+# Is the date in each order parametric?
+# YES if p > 0.05
 normalityCheck <- gameSummary %>%
   select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
@@ -193,8 +204,8 @@ normalityCheck <- gameSummary %>%
     p_value = shapiro.test(unlist(value))$p.value,
     statistic = shapiro.test(unlist(value))$statistic
   )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
-
 ```{r Counter balancing for parametric data - Randomization check}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 parametricCheck <- gameSummary %>%
@@ -209,6 +220,7 @@ parametricCheck <- gameSummary %>%
     p_value = t.test(unlist(order1), unlist(order2))$p.value,
     statistic = t.test(unlist(order1), unlist(order2))$statistic
   )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 
 
@@ -226,7 +238,9 @@ nonParametricCheck <- gameSummary %>%
     p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
     statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
   )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
+### 3. Correlations
 
 Correlation matrices for all data and per-condition data. Use this to find variable relationships you want to investigate further.
 ```{r Correlation}
@@ -238,8 +252,8 @@ filter_out = c(1,2,13,15) # columns to filter out
 chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
 
 # Data for per-condition correlation matrix between every question and performance
-res2 <- Hmisc::rcorr(as.matrix(gameSummary[,-filter_out]))
-flattenCorrMatrix(res2$r, res2$P)
+correlationMatrix <- Hmisc::rcorr(as.matrix(gameSummary[,-filter_out]))
+correlationMatrix <- flattenCorrMatrix(correlationMatrix$r, correlationMatrix$P)
 
 # Per-condition correlation matrix between every question and performance
 for(condition in unique(gameSummary$Condition)) {
@@ -253,11 +267,13 @@ Investigate the interesting correlations further.
 # cor.test(VAR1, VAR2, method="spearman", exact = FALSE)
 ```
 
+### 4. Test our hypothesis
 
-Investigate the relationships closer.
-```{r Investigate relationships}
-# Plot of SoA vs SoO, per-condition
-# TODO: make it possible to look at multiple variable pairs
+### 5. Plotting ground
+
+```{r Plot correlations}
+# Plot SoA vs SoO, per-condition
+# TODO: Make it pretty
 gameSummary %>%
   ggplot(aes(x = SoA, y = SoO, colour = Condition)) +
   geom_jitter() +
