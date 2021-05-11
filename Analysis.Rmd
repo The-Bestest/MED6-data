@@ -14,7 +14,7 @@ library(PerformanceAnalytics)
 library(RColorBrewer)
 library(GGally)
 library(DescTools) # ICC
-library(Rmisc) # summarySE
+#library(Rmisc) # summarySE
 library(ggbeeswarm)
 ```
 ```{r Define functions, include=FALSE}
@@ -68,26 +68,26 @@ plotCorrelation <- function(data, x, y, xLabel, yLabel) {
 plotBoxplotLikert <- function(data, y, yColumnName, yLabel, condition1Label, condition2Label) {
   ID <- 1:7 # 7-Likert scale
 
-  summaryData <- summarySE(data, measurevar=yColumnName, groupvars=c("Condition"))
-  colnames(summaryData)[3] = "y"
+  #summaryData <- summarySE(data, measurevar=yColumnName, groupvars=c("Condition"))
+  #colnames(summaryData)[3] = "y"
 
-  boxPlot <- ggplot(summaryData, aes(Condition, y, colour=Condition)) +
-    theme_classic(base_size = 20) +
-    geom_boxplot(aes(lower = y - ci, upper = y + ci, middle = y, ymin = y - 3*ci, ymax = y + 3*ci),
-      stat = "identity", color="#454545", width=.5, alpha=0) +
-    geom_beeswarm(data = gameSummary, priority='density',cex=3, color="gray", aes(size=3, stroke=1)) +
-    scale_x_discrete(limits=c(), labels=c(condition1Label, condition2Label)) +
-    scale_y_continuous("ownership", limits=c(1, 7.5), labels = as.character(ID), breaks = ID) +
-    ylab(yLabel) + xlab("") +
-    theme(legend.position="none")
+  #boxPlot <- ggplot(summaryData, aes(Condition, y, colour=Condition)) +
+   # theme_classic(base_size = 20) +
+    #geom_boxplot(aes(lower = y - ci, upper = y + ci, middle = y, ymin = y - 3*ci, ymax = y + 3*ci),
+   #   stat = "identity", color="#454545", width=.5, alpha=0) +
+   # geom_beeswarm(data = gameSummary, priority='density',cex=3, color="gray", aes(size=3, stroke=1)) +
+    #scale_x_discrete(limits=c(), labels=c(condition1Label, condition2Label)) +
+   # scale_y_continuous("ownership", limits=c(1, 7.5), labels = as.character(ID), breaks = ID) +
+   # ylab(yLabel) + xlab("") +
+   # theme(legend.position="none")
 
 
-  boxPlotData <- ggplot_build(boxPlot)$data[[1]]
+  #boxPlotData <- ggplot_build(boxPlot)$data[[1]]
   # Add red mean median lines
   # TODO: is it alright to compute mean for nonparametric data?
-  boxPlot <- boxPlot + geom_segment(data=boxPlotData, aes(x=xmin, xend=xmax, y=middle, yend=middle), colour="red", size=2)
+ # boxPlot <- boxPlot + geom_segment(data=boxPlotData, aes(x=xmin, xend=xmax, y=middle, yend=middle), colour="red", size=2)
 
-  boxPlot
+  #boxPlot
 }
 
 ```
@@ -272,7 +272,7 @@ parametricCheck <- gameSummary %>%
 ```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check}
 # Does it matter for our non-parametric data in post questionnaire if discrete condition was first?
 nonParametricCheckPost <- gameSummary %>%
-  select(Condition, orderNumber, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
+  select(Condition, orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -343,8 +343,20 @@ Investigate the interesting correlations further.
 ```
 
 ### 4. Test our hypothesis
+Assuming we have all data in order, we can check our hypothesis.
 ```{r Hypothesis checks}
-# TODO:
+hypothesisCheck <- gameSummary %>%
+  select(Condition, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
+  gather(key = variable, value = value, -Condition) %>%
+  group_by(Condition, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(Condition, value) %>%
+  group_by(variable)  %>%
+  mutate(
+    # TODO: Rename Body and Blocks to actual condition names once we have new data
+    p_value = wilcox.test(unlist(Body), unlist(Blocks), paired=TRUE, exact=FALSE)$p.value,
+    statistic = wilcox.test(unlist(Body), unlist(Blocks), paired=TRUE, exact=FALSE)$statistic
+  )
 ```
 
 
