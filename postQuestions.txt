@@ -1,1 +1,10 @@
-TODO
+SoA: I felt like I was in control of closing the virtual hand Not at all (low to high)
+SoO: I felt like the virtual hand was part of my body (low to high)
+Proprioception: I felt the movement of the virtual hand in my real hand (low to high)
+Frustration: It was frustrating when I was trying to close the hand (low to high)
+MentalEffort: The mental effort required for the task was  (low to high)
+PhysicalEffort: The physical effort required for the task was (low to high)
+GeneralComfort: My general comfort was (low to high)
+Difficulty: Overall, the input device (BCI) was (difficult to easy)
+PerceivedSuccesses: How many times out of 30 do you think you popped the balloon the first/second time?
+ReportedAvgAttempts: How many times do you think you tried to close the hand per round on average in the first/second condition? 
