@@ -358,7 +358,20 @@ hypothesisCheck <- gameSummary %>%
     statistic = wilcox.test(unlist(Body), unlist(Blocks), paired=TRUE, exact=FALSE)$statistic
   )
 ```
-
+```{r Performance checks}
+performanceCheck <- gameSummary %>%
+  select(Condition, accPerc, PerceivedSuccesses, ReportedAvgAttempts) %>%
+  gather(key = variable, value = value, -Condition) %>%
+  group_by(Condition, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(Condition, value) %>%
+  group_by(variable)  %>%
+  mutate(
+    # TODO: Rename Body and Blocks to actual condition names once we have new data
+    p_value = t.test(unlist(Body), unlist(Blocks))$p.value,
+    statistic = t.test(unlist(Body), unlist(Blocks))$statistic
+  )
+```
 
 ### 5. Plotting ground
 
