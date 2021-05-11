@@ -13,6 +13,7 @@ library(corrplot)
 library(PerformanceAnalytics)
 library(RColorBrewer)
 library(GGally)
+library(DescTools) # ICC
 ```
 ```{r Define functions, include=FALSE}
 load_bci_data <- function(fileNamePattern, columns) {
@@ -259,6 +260,17 @@ nonParametricCheckPre <- gameSummary %>%
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
+```{r Intraclass correlation check}
+# Todo: is thi correct? How to interpret this?
+iccCheckPre <- gameSummary %>%
+  select(starts_with('Q'))
+ICC(iccCheckPre)
+
+iccCheckPost <- gameSummary %>%
+  select(Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception)
+ICC(iccCheckPost)
+```
+
 ### 3. Correlations
 
 Correlation matrices for all data and per-condition data. Use this to find variable relationships you want to investigate further.
