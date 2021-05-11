@@ -46,6 +46,20 @@ flattenCorrMatrix <- function(cormat, pmat) {
     p = pmat[ut]
     )
 }
+
+plotCorrelation <- function(data, x, y, xLabel, yLabel) {
+  data  %>%
+    ggplot(aes(x=x,y=y, colour=Condition, fill=Condition))+
+    theme_bw(base_size = 10) +
+    geom_point(position=position_jitter(h=0.08, w=0.08), shape = 21, alpha = 0.5, size = 3) +
+    expand_limits(x=c(1,7), y=c(1, 7))+
+    scale_color_manual(values=c("red","blue")) +
+    scale_fill_manual(values=c("red","blue")) +
+    xlab(label = xLabel) +
+    ylab(label = yLabel) +
+    labs(fill = "Conditions", colour = "Conditions")+
+    geom_smooth(method = "lm", fill = NA)
+}
 ```
 
 ## BCI - Continuous and Discrete Input
@@ -307,11 +321,8 @@ Investigate the interesting correlations further.
 ### 5. Plotting ground
 
 ```{r Plot correlations}
-# TODO: Make it pretty
-gameSummary %>%
-  ggplot(aes(x = SoA, y = SoO, colour = Condition)) +
-  geom_jitter() +
-  geom_smooth(method = "lm", fill = NA)
+# Example: Plot correlations between SoA and SoO
+# plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA", "SoO")
 ```
 
 ```{r Plot boxplots}
