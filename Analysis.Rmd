@@ -224,16 +224,35 @@ parametricCheck <- gameSummary %>%
 ```
 
 
-```{r Counter balancing for non-parametric data - Randomization check}
-# Does it matter for our non-parametric data if discrete condition was first?
-nonParametricCheck <- gameSummary %>%
-  select(-Participant, -accPerc, -PerceivedSuccesses, -ReportedAvgAttempts, -activateDelay) %>%
+```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check}
+# Does it matter for our non-parametric data in post questionnaire if discrete condition was first?
+nonParametricCheckPost <- gameSummary %>%
+  select(Condition, orderNumber, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
   spread(orderNumber, value) %>% 
   group_by(variable)  %>%
   rename(order1 = 3, order2 = 4) %>%
+  mutate(
+    p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
+    statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
+  )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
+```
+
+```{r Counter balancing for non-parametric data in pre-questionnaire- Randomization check}
+# Does it matter for our non-parametric data in pre questionnaire if discrete condition was first?
+nonParametricCheckPre <- gameSummary %>%
+  # Pick all columns that start with Q - those are the ones from pre-questionnaire
+  select(starts_with('Q'), Condition, orderNumber) %>%
+  filter(Condition==discrete_label)  %>%
+  gather(key = variable, value = value, -Condition, -orderNumber) %>%
+  group_by(orderNumber, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(orderNumber, value) %>%
+  group_by(variable) %>%
+  rename(order1 = 2, order2 = 3) %>%
   mutate(
     p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
     statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
