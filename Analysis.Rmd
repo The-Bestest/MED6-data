@@ -109,8 +109,6 @@ preQuestionnaire <- preQuestionnaire %>%
 
 ```{r Load post-experiment questionnaire data, echo=FALSE, results='hide'}
 postQuestionnaire <- as_tibble(read.csv(file.path("./data","postQuestionnaire.csv")))
-orderNumber <- rep(c(1,2,2,1),10)
-postQuestionnaire <- cbind(postQuestionnaire, orderNumber)
 ```
 
 ```{r Load game data, echo=FALSE, results='hide'}
