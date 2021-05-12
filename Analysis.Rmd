@@ -290,20 +290,22 @@ nonParametricCheckPost <- gameSummary %>%
 # Does it matter for our non-parametric data in pre questionnaire if discrete condition was first?
 nonParametricCheckPre <- gameSummary %>%
   # Pick all columns that start with Q - those are the ones from pre-questionnaire
-  select(starts_with('Q'), Condition, orderNumber) %>%
+  select(starts_with('Q'),VR, Condition, orderNumber) %>%
   filter(Condition==discrete_label)  %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(orderNumber, variable) %>%
-  summarise(value=list(value)) %>%
+  summarise(value=list(as.numeric(value))) %>%
   spread(orderNumber, value) %>%
   group_by(variable) %>%
   rename(order1 = 2, order2 = 3) %>%
   mutate(
-    p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
+    p_value   = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
     statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
+
+
 ```{r Intraclass correlation check}
 # Todo: is thi correct? How to interpret this?
 iccCheckPre <- gameSummary %>%
