@@ -102,7 +102,8 @@ preQuestionnaire <- preQuestionnaire %>%
   mutate_if(is.character, stringr::str_replace_all, pattern = " ", replacement = "_") %>%
   mutate_if(is.character, stringr::str_replace_all, pattern = "P", replacement = "") %>%
   mutate(Participant = as.numeric(Participant)) %>%
-  pivot_wider(names_from = X)
+  pivot_wider(names_from = X) %>%
+  mutate_at(vars(-("Sex")),as.numeric)
 
 ```
 
@@ -238,9 +239,9 @@ Check parametric data for normality in order to find out whether we can use para
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
 # Is the date in each order parametric?
-# YES if p > 0.05
+#If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
 normalityCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber) %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -254,7 +255,7 @@ normalityCheck <- gameSummary %>%
 ```{r Counter balancing for parametric data - Randomization check}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 parametricCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber) %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -294,7 +295,7 @@ nonParametricCheckPre <- gameSummary %>%
   filter(Condition==discrete_label)  %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(orderNumber, variable) %>%
-  summarise(value=list(as.numeric(value))) %>%
+  summarise(value=list(value)) %>%
   spread(orderNumber, value) %>%
   group_by(variable) %>%
   rename(order1 = 2, order2 = 3) %>%
@@ -323,7 +324,8 @@ Correlation matrices for all data and per-condition data. Use this to find varia
 ```{r Correlation}
 # check out this web page on easy summaries for correlations:
 # http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
-filter_out = c(1,2,13,15) # columns to filter out
+#We need to filter the followwing columns: Participant, Condition, Order number, activated delay, BCI
+filter_out = c(1,2,13,15,29,31) # columns to filter out
 
 # Correlation matrix between every question and performance
 chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
