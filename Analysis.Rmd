@@ -324,7 +324,7 @@ Correlation matrices for all data and per-condition data. Use this to find varia
 ```{r Correlation}
 # check out this web page on easy summaries for correlations:
 # http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
-#We need to filter the followwing columns: Participant, Condition, Order number, activated delay, BCI
+#We need to filter the followwing columns: Participant, Condition, Order number, activate delay, Sex and BCI 
 filter_out = c(1,2,13,15,29,31) # columns to filter out
 
 # Correlation matrix between every question and performance
