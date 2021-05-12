@@ -233,7 +233,7 @@ postQuestionnaire %>%
 ### 2. Unsystematic manipulations check
 
 Check parametric data for normality in order to find out whether we can use parametric analysis on them.
-```{r Check parametric data for normality}
+```{r Check parametric data for normality grouped by order number and condition}
 # Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
@@ -252,6 +252,41 @@ normalityCheck <- gameSummary %>%
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
+```{r Check parametric data for normality grouped by Sex}
+# Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
+# We don't need to check for variance with Levene's test, as Welch's test takes care of that.
+# https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
+
+# Is the date in each order parametric?
+#If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
+normalitySexCheck <- gameSummary %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
+  gather(key = variable, value = value, -Sex) %>%
+  group_by(Sex, variable) %>%
+  summarise(value=list(value)) %>%
+  group_by(variable) %>%
+  mutate(
+    p_value = shapiro.test(unlist(value))$p.value,
+    statistic = shapiro.test(unlist(value))$statistic
+  )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
+```
+```{r Counter balancing for parametric data grouped by Sex - Randomization check}
+# Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
+sexCheck <- gameSummary %>%
+  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
+  gather(key = variable, value = value, -Sex) %>%
+  group_by(variable, Sex) %>%
+  summarise(value=list(value)) %>%
+  spread(Sex, value) %>% 
+  group_by(variable) %>%
+  mutate(
+    p_value   = wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$p.value,
+      statistic = wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$statistic
+  )
+# method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
+```
+
 ```{r Counter balancing for parametric data - Randomization check}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 parametricCheck <- gameSummary %>%
