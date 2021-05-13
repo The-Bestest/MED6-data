@@ -4,6 +4,7 @@ output: html_notebook
 ---
 
 ```{r Load packages, include=FALSE}
+library(Rmisc) # summarySE
 library(tidyverse)
 library(tidymodels)
 library(skimr)
@@ -14,7 +15,6 @@ library(PerformanceAnalytics)
 library(RColorBrewer)
 library(GGally)
 library(DescTools) # ICC
-#library(Rmisc) # summarySE
 library(ggbeeswarm)
 ```
 ```{r Define functions, include=FALSE}
@@ -50,9 +50,9 @@ flattenCorrMatrix <- function(cormat, pmat) {
 }
 
 plotCorrelation <- function(data, x, y, xLabel, yLabel) {
-  data  %>%
+  correlationPlot <- data  %>%
     ggplot(aes(x=x,y=y, colour=Condition, fill=Condition))+
-    theme_bw(base_size = 10) +
+    theme_bw(base_size = 20) +
     geom_point(position=position_jitter(h=0.08, w=0.08), shape = 21, alpha = 0.5, size = 3) +
     expand_limits(x=c(1,7), y=c(1, 7))+
     scale_color_manual(values=c("red","blue")) +
@@ -61,33 +61,40 @@ plotCorrelation <- function(data, x, y, xLabel, yLabel) {
     ylab(label = yLabel) +
     labs(fill = "Conditions", colour = "Conditions")+
     geom_smooth(method = "lm", fill = NA)
+
+  png(paste("plots/correlation_", xLabel, "vs", yLabel, ".png", sep=""), width = 800, height = 600)
+  plot(correlationPlot)
+  dev.off()
+
+  correlationPlot
 }
 
-# TODO: ask Hendrik for the paper with best plotting practices again
-# Steffen says this is a fake boxplot
 plotBoxplotLikert <- function(data, y, yColumnName, yLabel, condition1Label, condition2Label) {
   ID <- 1:7 # 7-Likert scale
 
-  #summaryData <- summarySE(data, measurevar=yColumnName, groupvars=c("Condition"))
-  #colnames(summaryData)[3] = "y"
+  summaryData <- summarySE(data, measurevar=yColumnName, groupvars=c("Condition"))
+  colnames(summaryData)[3] = "y"
 
-  #boxPlot <- ggplot(summaryData, aes(Condition, y, colour=Condition)) +
-   # theme_classic(base_size = 20) +
-    #geom_boxplot(aes(lower = y - ci, upper = y + ci, middle = y, ymin = y - 3*ci, ymax = y + 3*ci),
-   #   stat = "identity", color="#454545", width=.5, alpha=0) +
-   # geom_beeswarm(data = gameSummary, priority='density',cex=3, color="gray", aes(size=3, stroke=1)) +
-    #scale_x_discrete(limits=c(), labels=c(condition1Label, condition2Label)) +
-   # scale_y_continuous("ownership", limits=c(1, 7.5), labels = as.character(ID), breaks = ID) +
-   # ylab(yLabel) + xlab("") +
-   # theme(legend.position="none")
+  boxPlot <- ggplot(summaryData, aes(Condition, y, colour=Condition)) +
+    theme_classic(base_size = 20) +
+    geom_boxplot(aes(lower = y - ci, upper = y + ci, middle = y, ymin = y - 3*ci, ymax = y + 3*ci),
+      stat = "identity", color="#454545", width=.5, alpha=0) +
+    geom_beeswarm(data = gameSummary, priority='density',cex=3, color="gray", aes(size=3, stroke=1)) +
+    scale_x_discrete(limits=c(), labels=c(condition1Label, condition2Label)) +
+    scale_y_continuous(yLabel, limits=c(1, 7.5), labels = as.character(ID), breaks = ID) +
+    ylab(yLabel) + xlab("") +
+    theme(legend.position="none")
 
 
-  #boxPlotData <- ggplot_build(boxPlot)$data[[1]]
+  boxPlotData <- ggplot_build(boxPlot)$data[[1]]
   # Add red mean median lines
-  # TODO: is it alright to compute mean for nonparametric data?
- # boxPlot <- boxPlot + geom_segment(data=boxPlotData, aes(x=xmin, xend=xmax, y=middle, yend=middle), colour="red", size=2)
+  boxPlot <- boxPlot + geom_segment(data=boxPlotData, aes(x=xmin, xend=xmax, y=middle, yend=middle), colour="red", size=2)
 
-  #boxPlot
+  png(paste("plots/boxplot_", yLabel, ".png", sep=""), width = 800, height = 600)
+  plot(boxPlot)
+  dev.off()
+
+  boxPlot
 }
 
 ```
@@ -414,10 +421,10 @@ performanceCheck <- gameSummary %>%
 
 ```{r Plot correlations}
 # Example: Plot correlations between SoA and SoO
-# plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA", "SoO")
+plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA", "SoO")
 ```
 
 ```{r Plot boxplots}
 # Example: Plot boxplot of SoA
-# print(plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label))
+print(plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label))
 ```
