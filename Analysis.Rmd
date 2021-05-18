@@ -415,19 +415,18 @@ nonParametricCheckPost
 performanceCheck
 
 hypothesisCheck
-
 ```
 
 
 
 ### 6. Plotting ground
 
-```{r Plot correlations}
+```{r Plot correlations, include=FALSE}
 # Example: Plot correlations between SoA and SoO
 plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA", "SoO")
 ```
 
-```{r Plot boxplots}
+```{r Plot boxplots, include=FALSE}
 # Example: Plot boxplot of SoA
 plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label)
 ```
