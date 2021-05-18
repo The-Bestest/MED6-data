@@ -226,19 +226,19 @@ gameSummary %>%
 ### 2. Unsystematic manipulations check
 
 Check parametric data for normality in order to find out whether we can use parametric analysis on them.
-```{r Check parametric data for normality grouped by order number and condition, include=FALSE}
-# Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
+```{r Check parametric data for normality grouped by condition, include=FALSE}
+# Check performance (ObjectiveSuccesses), Perceived Successes, ReportedAvgAttempts for normality
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
 # Is the date in each order parametric?
 # If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
 normalityCheck <- gameSummary %>%
-  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
-  gather(key = variable, value = value, -Condition, -orderNumber) %>%
-  group_by(Condition, orderNumber, variable) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, Age) %>%
+  gather(key = variable, value = value, -Condition) %>%
+  group_by(Condition, variable) %>%
   summarise(value=list(value)) %>%
-  group_by(variable) %>%
+  group_by(Condition, value) %>%
   mutate(
     p_value = shapiro.test(unlist(value))$p.value,
     statistic = shapiro.test(unlist(value))$statistic
@@ -246,7 +246,7 @@ normalityCheck <- gameSummary %>%
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 ```{r Check parametric data for normality grouped by Sex, include=FALSE}
-# Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
+# Check performance (ObjectiveSuccesses), Perceived Successes, ReportedAvgAttempts for normality
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
