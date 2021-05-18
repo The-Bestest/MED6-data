@@ -31,12 +31,7 @@ load_bci_data <- function(fileNamePattern, columns) {
     # remove the leading "P" from participant label, e.g. P10 -> 10
     mutate(
       Participant=as.numeric(str_replace(Participant,"P","")), Condition=as.factor(Condition),
-    ) %>%
-    dplyr::group_by(Participant, Condition) %>%
-    mutate(
-      vis_t_time = as.POSIXlt(Timestamp, format = "%Y-%m-%d %H:%M:%OS"),
-      Timestamp = seconds(vis_t_time)) %>%
-    ungroup()
+    )
 }
 
 flattenCorrMatrix <- function(cormat, pmat) {
@@ -132,7 +127,9 @@ game_columns = cols(
   TrialGoal = col_character(),
   BCIThresholdBuffer = col_character()
 )
+
 game <- load_bci_data("*Game.csv", game_columns)
+
 game <- game %>%
   # convert time to a proper Timestamp object
   dplyr::group_by(Participant, Condition) %>%
@@ -147,16 +144,14 @@ game <- game %>%
   select(Participant, Condition, InputWindowNum,Timestamp) %>%
   dplyr::group_by(Participant, Condition, InputWindowNum) %>%
   dplyr::summarise(StartTime = min(Timestamp)) %>%
-  right_join(game) %>%
-  mutate(TimeSinceIWstart = ifelse(TrialResult == "AccInput",Timestamp - StartTime,NA))
+  right_join(game)
 
 gameSummary <- game %>%
-  dplyr::mutate(successes = ifelse(TrialResult == "AccInput", 1, 0)) %>%
   dplyr::group_by(Participant, Condition) %>%
-  dplyr::summarize(accPerc = sum(successes,na.rm = TRUE) / max(InputWindowNum), activateDelay = mean(TimeSinceIWstart,na.rm = TRUE))
+  right_join(game)
 
 # Filter game columns, add columns here on need-only basis
-game <- game[c("Participant", "Condition", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
+#game <- game[c("Participant", "Condition", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
 
 ```{r Load meta data, echo=FALSE, results='hide'}
@@ -202,15 +197,13 @@ sample <- sample[c("Participant", "Condition", "Event", "Timestamp", "BCIConfide
 ```
 
 ```{r Merge all data, echo=FALSE, results='hide'}
-gameSummary <-gameSummary %>%
-  merge(postQuestionnaire) %>%
-  merge(preQuestionnaire)
-gameSummary <- merge(gameSummary,postQuestionnaire)
+gameSummary <- preQuestionnaire %>%
+  merge(postQuestionnaire)
 ```
 
 ```{r Parittion data}
-discrete_label <- "Body" # TODO: fix the label
-continuous_label <- "Blocks" # TODO: fix the label
+discrete_label <- "Discrete" # TODO: fix the label
+continuous_label <- "Continuous" # TODO: fix the label
 ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
 Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
 Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
@@ -227,11 +220,6 @@ gameSummary %>%
   select(-Participant) %>%
   group_by(Condition) %>%
   skim()
-
-postQuestionnaire %>%
-  select(-Participant) %>%
-  group_by(Condition) %>%
-  skim()
 ```
 
 
@@ -244,9 +232,9 @@ Check parametric data for normality in order to find out whether we can use para
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
 
 # Is the date in each order parametric?
-#If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
+# If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
 normalityCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -265,7 +253,7 @@ normalityCheck <- gameSummary %>%
 # Is the date in each order parametric?
 #If the p-value is less than α =.05, there is sufficient evidence to say that the sample does not come from a population that is normally distributed.
 normalitySexCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
   gather(key = variable, value = value, -Sex) %>%
   group_by(Sex, variable) %>%
   summarise(value=list(value)) %>%
@@ -279,7 +267,7 @@ normalitySexCheck <- gameSummary %>%
 ```{r Counter balancing for parametric data grouped by Sex - Randomization check}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 sexCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
   gather(key = variable, value = value, -Sex) %>%
   group_by(variable, Sex) %>%
   summarise(value=list(value)) %>%
@@ -295,7 +283,7 @@ sexCheck <- gameSummary %>%
 ```{r Counter balancing for parametric data - Randomization check}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 parametricCheck <- gameSummary %>%
-  select(accPerc, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -364,8 +352,8 @@ Correlation matrices for all data and per-condition data. Use this to find varia
 ```{r Correlation}
 # check out this web page on easy summaries for correlations:
 # http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
-#We need to filter the followwing columns: Participant, Condition, Order number, activate delay, Sex and BCI 
-filter_out = c(1,2,13,15,29,31) # columns to filter out
+#We need to filter the following columns: Participant, Condition, Order number, activate delay, Sex and BCI 
+filter_out = c(1,14,16,30,31) # columns to filter out
 
 # Correlation matrix between every question and performance
 chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
@@ -383,7 +371,7 @@ for(condition in unique(gameSummary$Condition)) {
 Investigate the interesting correlations further.
 ```{r Correlation checks}
 # Template:
-# cor.test(VAR1, VAR2, method="spearman", exact = FALSE)
+# cor.test(gameSummary$SoO, gameSummary$SoA, method="spearman", exact = FALSE)
 ```
 
 ### 4. Test our hypothesis
@@ -397,23 +385,21 @@ hypothesisCheck <- gameSummary %>%
   spread(Condition, value) %>%
   group_by(variable)  %>%
   mutate(
-    # TODO: Rename Body and Blocks to actual condition names once we have new data
-    p_value = wilcox.test(unlist(Body), unlist(Blocks), paired=TRUE, exact=FALSE)$p.value,
-    statistic = wilcox.test(unlist(Body), unlist(Blocks), paired=TRUE, exact=FALSE)$statistic
+    p_value = wilcox.test(unlist(Discrete), unlist(Continuous), paired=TRUE, exact=FALSE)$p.value,
+    statistic = wilcox.test(unlist(Discrete), unlist(Continuous), paired=TRUE, exact=FALSE)$statistic
   )
 ```
 ```{r Performance checks}
 performanceCheck <- gameSummary %>%
-  select(Condition, accPerc, PerceivedSuccesses, ReportedAvgAttempts) %>%
+  select(Condition, ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts) %>%
   gather(key = variable, value = value, -Condition) %>%
   group_by(Condition, variable) %>%
   summarise(value=list(value)) %>%
   spread(Condition, value) %>%
   group_by(variable)  %>%
   mutate(
-    # TODO: Rename Body and Blocks to actual condition names once we have new data
-    p_value = t.test(unlist(Body), unlist(Blocks))$p.value,
-    statistic = t.test(unlist(Body), unlist(Blocks))$statistic
+    p_value = t.test(unlist(Discrete), unlist(Continuous))$p.value,
+    statistic = t.test(unlist(Discrete), unlist(Continuous))$statistic
   )
 ```
 
