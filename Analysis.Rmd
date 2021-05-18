@@ -257,15 +257,20 @@ normalitySexCheck <- gameSummary %>%
   gather(key = variable, value = value, -Sex) %>%
   group_by(Sex, variable) %>%
   summarise(value=list(value)) %>%
-  group_by(variable) %>%
+  group_by(Sex, variable) %>%
   mutate(
     p_value = shapiro.test(unlist(value))$p.value,
     statistic = shapiro.test(unlist(value))$statistic
   )
+
+isVariableNormalBySex <- function(variable) {
+  variable %in% c('ObjectiveSuccesses', 'PerceivedSuccesses')
+}
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 ```{r Counter balancing for parametric data grouped by Sex - Randomization check, include=FALSE}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
+
 sexCheck <- gameSummary %>%
   select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
   gather(key = variable, value = value, -Sex) %>%
@@ -274,16 +279,21 @@ sexCheck <- gameSummary %>%
   spread(Sex, value) %>% 
   group_by(variable) %>%
   mutate(
-    p_value   = wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$p.value,
-      statistic = wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$statistic
+      test = case_when(isVariableNormalBySex(variable) ~ "Welch's t test", TRUE ~ "Wilcoxon test"),
+      p_value = case_when(
+        isVariableNormalBySex(variable) ~ t.test(unlist(m), unlist(f))$p.value,
+        TRUE ~ wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$p.value),
+      statistic = case_when(
+        isVariableNormalBySex(variable) ~ t.test(unlist(m), unlist(f))$statistic,
+        TRUE ~ wilcox.test(unlist(m), unlist(f), paired=FALSE, exact=FALSE)$statistic),
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 
 ```{r Counter balancing for parametric data - Randomization check, include=FALSE}
-# Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
+# Does it matter for actual performance and perceived performance if discrete condition was first?
 parametricCheck <- gameSummary %>%
-  select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, Condition, orderNumber, Age) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
@@ -301,12 +311,12 @@ parametricCheck <- gameSummary %>%
 ```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check, include=FALSE}
 # Does it matter for our non-parametric data in post questionnaire if discrete condition was first?
 nonParametricCheckPost <- gameSummary %>%
-  select(Condition, orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
+  select(Condition, orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception, ReportedAvgAttempts) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
   spread(orderNumber, value) %>% 
-  group_by(variable)  %>%
+  group_by(Condition, variable)  %>%
   rename(order1 = 3, order2 = 4) %>%
   mutate(
     p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
