@@ -96,7 +96,7 @@ plotBoxplotLikert <- function(data, y, yColumnName, yLabel, condition1Label, con
 
 ## BCI - Continuous and Discrete Input
 
-```{r Load pre-experiment questionnaire data, echo=FALSE, results='hide'}
+```{r Load pre-experiment questionnaire data, include=FALSE, echo=FALSE, results='hide'}
 preQuestionnaire <- as_tibble(read.csv(file.path("./data","preQuestionnaire.csv"),stringsAsFactors=FALSE)) %>%
   mutate_if(is.character, stringr::str_replace_all, pattern = " ", replacement = "_")
 preQuestionnaire <- preQuestionnaire %>%
@@ -109,107 +109,107 @@ preQuestionnaire <- preQuestionnaire %>%
 
 ```
 
-```{r Load post-experiment questionnaire data, echo=FALSE, results='hide'}
+```{r Load post-experiment questionnaire data, include=FALSE, echo=FALSE, results='hide'}
 postQuestionnaire <- as_tibble(read.csv(file.path("./data","postQuestionnaire.csv")))
 ```
 
-```{r Load game data, echo=FALSE, results='hide'}
-game_columns = cols(
-  .default = col_double(),
-  Event = col_character(),
-  Timestamp = col_datetime(format = ""),
-  SessionID = col_character(),
-  Email = col_character(),
-  BCIState = col_character(),
-  InputWindow = col_character(),
-  GameState = col_character(),
-  TrialResult = col_character(),
-  TrialGoal = col_character(),
-  BCIThresholdBuffer = col_character()
-)
-
-game <- load_bci_data("*Game.csv", game_columns)
-
-game <- game %>%
-  # convert time to a proper Timestamp object
-  dplyr::group_by(Participant, Condition) %>%
-  mutate(
-    GameIsOn = ifelse(Event == "GameRunning", 1, 0),
-    GameIsOn = cumsum(GameIsOn)) %>%
-    arrange(Participant,Condition,Timestamp) %>%
-    dplyr::mutate(InputWindowNum = dplyr::lag(ifelse(Event == "GameDecision", 1, 0),default=0)) %>%
-    dplyr::mutate(InputWindowNum = cumsum(InputWindowNum)) %>%
-    ungroup()
-game <- game %>%
-  select(Participant, Condition, InputWindowNum,Timestamp) %>%
-  dplyr::group_by(Participant, Condition, InputWindowNum) %>%
-  dplyr::summarise(StartTime = min(Timestamp)) %>%
-  right_join(game)
-
-gameSummary <- game %>%
-  dplyr::group_by(Participant, Condition) %>%
-  right_join(game)
+```{r Load game data, echo=FALSE, include=FALSE, results='hide'}
+# game_columns = cols(
+#   .default = col_double(),
+#   Event = col_character(),
+#   Timestamp = col_datetime(format = ""),
+#   SessionID = col_character(),
+#   Email = col_character(),
+#   BCIState = col_character(),
+#   InputWindow = col_character(),
+#   GameState = col_character(),
+#   TrialResult = col_character(),
+#   TrialGoal = col_character(),
+#   BCIThresholdBuffer = col_character()
+# )
+# 
+# game <- load_bci_data("*Game.csv", game_columns)
+# 
+# game <- game %>%
+#   # convert time to a proper Timestamp object
+#   dplyr::group_by(Participant, Condition) %>%
+#   mutate(
+#     GameIsOn = ifelse(Event == "GameRunning", 1, 0),
+#     GameIsOn = cumsum(GameIsOn)) %>%
+#     arrange(Participant,Condition,Timestamp) %>%
+#     dplyr::mutate(InputWindowNum = dplyr::lag(ifelse(Event == "GameDecision", 1, 0),default=0)) %>%
+#     dplyr::mutate(InputWindowNum = cumsum(InputWindowNum)) %>%
+#     ungroup()
+# game <- game %>%
+#   select(Participant, Condition, InputWindowNum,Timestamp) %>%
+#   dplyr::group_by(Participant, Condition, InputWindowNum) %>%
+#   dplyr::summarise(StartTime = min(Timestamp)) %>%
+#   right_join(game)
+# 
+# gameSummary <- game %>%
+#   dplyr::group_by(Participant, Condition) %>%
+#   right_join(game)
 
 # Filter game columns, add columns here on need-only basis
 #game <- game[c("Participant", "Condition", "Timestamp", "GameIsOn", "InputWindowNum", "BCIConfidence")]
 ```
 
-```{r Load meta data, echo=FALSE, results='hide'}
-meta_columns = cols(
-  SessionID = col_character(),
-  Timestamp = col_datetime(format = ""),
-  Framecount = col_double(),
-  Email = col_character(),
-  DeviceID = col_character(),
-  FabInputTrials = col_double(),
-  AccInputTrials = col_double(),
-  RejInputTrials = col_double(),
-  Trials = col_double(),
-  InterTrialInterval_sec = col_double(),
-  InputWindow_sec = col_double(),
-  noInputReceivedFabAlarm_sec = col_double(),
-  FabAlarmVariability_sec = col_double(),
-  ConfidenceThreshold = col_double(),
-  BCIProcessingMode = col_character(),
-  ConsecutiveThresholdBufferSize = col_double()
-)
+```{r Load meta data, echo=FALSE, include=FALSE, results='hide'}
+# meta_columns = cols(
+#   SessionID = col_character(),
+#   Timestamp = col_datetime(format = ""),
+#   Framecount = col_double(),
+#   Email = col_character(),
+#   DeviceID = col_character(),
+#   FabInputTrials = col_double(),
+#   AccInputTrials = col_double(),
+#   RejInputTrials = col_double(),
+#   Trials = col_double(),
+#   InterTrialInterval_sec = col_double(),
+#   InputWindow_sec = col_double(),
+#   noInputReceivedFabAlarm_sec = col_double(),
+#   FabAlarmVariability_sec = col_double(),
+#   ConfidenceThreshold = col_double(),
+#   BCIProcessingMode = col_character(),
+#   ConsecutiveThresholdBufferSize = col_double()
+# )
 
-meta <- load_bci_data("*Meta.csv", meta_columns)
-
-# Filter meta columns, add columns here on need-only basis
-meta <- meta[c("Participant", "Condition", "Timestamp")]
-```
-
-```{r Load sample data, echo=FALSE, results='hide'}
-sample_columns = cols(
-  Event = col_character(),
-  Timestamp = col_datetime(format = ""),
-  Framecount = col_double(),
-  SessionID = col_character(),
-  Email = col_character(),
-  BCIConfidence = col_double(),
-  BCIState = col_character()
-)
-sample <- load_bci_data("*Sample.csv", sample_columns)
+#meta <- load_bci_data("*Meta.csv", meta_columns)
 
 # Filter meta columns, add columns here on need-only basis
-sample <- sample[c("Participant", "Condition", "Event", "Timestamp", "BCIConfidence")]
+# meta <- meta[c("Participant", "Condition", "Timestamp")]
 ```
 
-```{r Merge all data, echo=FALSE, results='hide'}
+```{r Load sample data, echo=FALSE, include=FALSE, results='hide'}
+# sample_columns = cols(
+#   Event = col_character(),
+#   Timestamp = col_datetime(format = ""),
+#   Framecount = col_double(),
+#   SessionID = col_character(),
+#   Email = col_character(),
+#   BCIConfidence = col_double(),
+#   BCIState = col_character()
+# )
+# sample <- load_bci_data("*Sample.csv", sample_columns)
+# 
+# # Filter meta columns, add columns here on need-only basis
+# sample <- sample[c("Participant", "Condition", "Event", "Timestamp", "BCIConfidence")]
+```
+
+```{r Merge all data, echo=FALSE, include=FALSE, results='hide'}
 gameSummary <- preQuestionnaire %>%
   merge(postQuestionnaire)
 ```
 
-```{r Parittion data}
-discrete_label <- "Discrete" # TODO: fix the label
-continuous_label <- "Continuous" # TODO: fix the label
-ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
-Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
-Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
-ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
-Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
-Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
+```{r Parittion data, include=FALSE}
+discrete_label <- "Discrete"
+continuous_label <- "Continuous"
+# ParticipantOrder1 <- gameSummary %>% filter(orderNumber == 1)
+# Discrete1 <- ParticipantOrder1 %>% filter(Condition==discrete_label)
+# Continuous1 <- ParticipantOrder1 %>% filter(Condition==continuous_label)
+# ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
+# Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
+# Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
 ```
 
 ### 1. Distributions
@@ -226,7 +226,7 @@ gameSummary %>%
 ### 2. Unsystematic manipulations check
 
 Check parametric data for normality in order to find out whether we can use parametric analysis on them.
-```{r Check parametric data for normality grouped by order number and condition}
+```{r Check parametric data for normality grouped by order number and condition, include=FALSE}
 # Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
@@ -245,7 +245,7 @@ normalityCheck <- gameSummary %>%
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
-```{r Check parametric data for normality grouped by Sex}
+```{r Check parametric data for normality grouped by Sex, include=FALSE}
 # Check performance (accPerc), Perceived Successes, ReportedAvgAttempts for normality
 # We don't need to check for variance with Levene's test, as Welch's test takes care of that.
 # https://daniellakens.blogspot.com/2015/01/always-use-welchs-t-test-instead-of.html
@@ -264,7 +264,7 @@ normalitySexCheck <- gameSummary %>%
   )
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
-```{r Counter balancing for parametric data grouped by Sex - Randomization check}
+```{r Counter balancing for parametric data grouped by Sex - Randomization check, include=FALSE}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 sexCheck <- gameSummary %>%
   select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Sex) %>%
@@ -280,7 +280,7 @@ sexCheck <- gameSummary %>%
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 
-```{r Counter balancing for parametric data - Randomization check}
+```{r Counter balancing for parametric data - Randomization check, include=FALSE}
 # Does it matter for actual performance, perceived performance and reported average attempt if discrete condition was first?
 parametricCheck <- gameSummary %>%
   select(ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts, Condition, orderNumber, Age) %>%
@@ -298,7 +298,7 @@ parametricCheck <- gameSummary %>%
 ```
 
 
-```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check}
+```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check, include=FALSE}
 # Does it matter for our non-parametric data in post questionnaire if discrete condition was first?
 nonParametricCheckPost <- gameSummary %>%
   select(Condition, orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
@@ -315,7 +315,7 @@ nonParametricCheckPost <- gameSummary %>%
 # method from: https://sebastiansauer.github.io/multiple-t-tests-with-dplyr/
 ```
 
-```{r Counter balancing for non-parametric data in pre-questionnaire- Randomization check}
+```{r Counter balancing for non-parametric data in pre-questionnaire- Randomization check, include=FALSE}
 # Does it matter for our non-parametric data in pre questionnaire if discrete condition was first?
 nonParametricCheckPre <- gameSummary %>%
   # Pick all columns that start with Q - those are the ones from pre-questionnaire
@@ -336,7 +336,7 @@ nonParametricCheckPre <- gameSummary %>%
 
 
 ```{r Intraclass correlation check}
-# Todo: is thi correct? How to interpret this?
+# Todo: is this correct? How to interpret this?
 iccCheckPre <- gameSummary %>%
   select(starts_with('Q'))
 ICC(iccCheckPre)
@@ -376,7 +376,7 @@ Investigate the interesting correlations further.
 
 ### 4. Test our hypothesis
 Assuming we have all data in order, we can check our hypothesis.
-```{r Hypothesis checks}
+```{r Hypothesis checks, include=FALSE}
 hypothesisCheck <- gameSummary %>%
   select(Condition, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception) %>%
   gather(key = variable, value = value, -Condition) %>%
@@ -389,7 +389,7 @@ hypothesisCheck <- gameSummary %>%
     statistic = wilcox.test(unlist(Discrete), unlist(Continuous), paired=TRUE, exact=FALSE)$statistic
   )
 ```
-```{r Performance checks}
+```{r Performance checks, include=FALSE}
 performanceCheck <- gameSummary %>%
   select(Condition, ObjectiveSuccesses, PerceivedSuccesses, ReportedAvgAttempts) %>%
   gather(key = variable, value = value, -Condition) %>%
@@ -403,7 +403,24 @@ performanceCheck <- gameSummary %>%
   )
 ```
 
-### 5. Plotting ground
+### 5. Present results
+
+```{r Present results}
+normalityCheck
+normalitySexCheck
+sexCheck
+parametricCheck
+nonParametricCheckPre
+nonParametricCheckPost
+performanceCheck
+
+hypothesisCheck
+
+```
+
+
+
+### 6. Plotting ground
 
 ```{r Plot correlations}
 # Example: Plot correlations between SoA and SoO
@@ -412,5 +429,5 @@ plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA", "SoO")
 
 ```{r Plot boxplots}
 # Example: Plot boxplot of SoA
-print(plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label))
+plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label)
 ```
