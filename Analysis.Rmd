@@ -365,17 +365,20 @@ Correlation matrices for all data and per-condition data. Use this to find varia
 #We need to filter the following columns: Participant, Condition, Order number, activate delay, Sex and BCI 
 filter_out = c(1,14,16,30,31) # columns to filter out
 
-# Correlation matrix between every question and performance
+# Correlation matrix among all of our variables
 chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
 
-# Data for per-condition correlation matrix between every question and performance
+# Data for per-condition correlation matrix among all of our variables
 correlationMatrix <- Hmisc::rcorr(as.matrix(gameSummary[,-filter_out]))
 correlationMatrix <- flattenCorrMatrix(correlationMatrix$r, correlationMatrix$P)
 
-# Per-condition correlation matrix between every question and performance
+# Per-condition correlation matrix among all of our variables
 for(condition in unique(gameSummary$Condition)) {
+  print(condition)
   corrplot(cor(gameSummary[gameSummary$Condition==condition,-filter_out]), type="upper",col=brewer.pal(n=8, name="RdYlBu"))
 }
+print("Both Conditions")
+corrplot(cor(gameSummary[-filter_out]), type="upper",col=brewer.pal(n=8, name="RdYlBu"))
 ```
 
 Investigate the interesting correlations further.
