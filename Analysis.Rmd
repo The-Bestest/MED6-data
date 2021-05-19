@@ -449,11 +449,11 @@ hypothesisCheck
 ### 6. Plotting ground
 
 ```{r Plot correlations, include=FALSE}
-# Example: Plot correlations between SoA and SoO
+plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA",  "SoO")
+plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$SoA, "Performance",  "SoA")
 plotCorrelation(gameSummary, gameSummary$PerceivedSuccesses, gameSummary$SoA, "Perceived Performance",  "SoA")
 ```
 
 ```{r Plot boxplots, include=FALSE}
-# Example: Plot boxplot of SoA
 plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label)
 ```
