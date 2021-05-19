@@ -310,7 +310,7 @@ parametricCheck <- gameSummary %>%
 
 ```{r Counter balancing for non-parametric data in post-questionnaire- Randomization check, include=FALSE}
 # Does it matter for our non-parametric data in post questionnaire if discrete condition was first?
-nonParametricCheckPost <- gameSummary %>%
+nonParametricCheckPostPerCondition <- gameSummary %>%
   select(Condition, orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception, ReportedAvgAttempts) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
@@ -318,6 +318,19 @@ nonParametricCheckPost <- gameSummary %>%
   spread(orderNumber, value) %>% 
   group_by(Condition, variable)  %>%
   rename(order1 = 3, order2 = 4) %>%
+  mutate(
+    p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
+    statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
+  )
+
+nonParametricCheckPost <- gameSummary %>%
+  select(orderNumber, SoO, SoA, Difficulty, Frustration, GeneralComfort, MentalEffort, PhysicalEffort, Proprioception, ReportedAvgAttempts) %>%
+  gather(key = variable, value = value, -orderNumber) %>%
+  group_by(orderNumber, variable) %>%
+  summarise(value=list(value)) %>%
+  spread(orderNumber, value) %>% 
+  group_by(variable)  %>%
+  rename(order1 = 2, order2 = 3) %>%
   mutate(
     p_value = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$p.value,
     statistic = wilcox.test(unlist(order1), unlist(order2), paired=TRUE, exact=FALSE)$statistic
@@ -424,6 +437,7 @@ normalitySexCheck
 sexCheck
 parametricCheck
 nonParametricCheckPre
+nonParametricCheckPostPerCondition
 nonParametricCheckPost
 performanceCheck
 
