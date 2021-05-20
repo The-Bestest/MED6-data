@@ -210,6 +210,8 @@ continuous_label <- "Continuous"
 # ParticipantOrder2 <- gameSummary %>% filter(orderNumber == 2)
 # Discrete2 <- ParticipantOrder2 %>% filter(Condition==discrete_label)
 # Continuous2 <- ParticipantOrder2 %>% filter(Condition==continuous_label)
+Discrete <- gameSummary %>% filter(Condition==discrete_label)
+Continuous <- gameSummary %>% filter(Condition==continuous_label)
 ```
 
 ### 1. Distributions
@@ -397,7 +399,12 @@ corrplot(cor(gameSummary[-filter_out]), type="upper",col=brewer.pal(n=8, name="R
 Investigate the interesting correlations further.
 ```{r Correlation checks}
 # Template:
-# cor.test(gameSummary$SoO, gameSummary$SoA, method="spearman", exact = FALSE)
+cor.test(gameSummary$SoA, gameSummary$ObjectiveSuccesses, method="spearman", exact = FALSE)
+cor.test(Discrete$SoA, Discrete$ObjectiveSuccesses, method="spearman", exact = FALSE)
+cor.test(Continuous$SoA, Continuous$ObjectiveSuccesses, method="spearman", exact = FALSE)
+cor.test(gameSummary$SoA, gameSummary$Frustration, method="spearman", exact = FALSE)
+cor.test(gameSummary$Frustration, gameSummary$ObjectiveFailures, method="spearman", exact = FALSE)
+
 ```
 
 ### 4. Test our hypothesis
@@ -452,6 +459,8 @@ hypothesisCheck
 plotCorrelation(gameSummary, gameSummary$SoA, gameSummary$SoO, "SoA",  "SoO")
 plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$SoA, "Performance",  "SoA")
 plotCorrelation(gameSummary, gameSummary$PerceivedSuccesses, gameSummary$SoA, "Perceived Performance",  "SoA")
+plotCorrelation(gameSummary, gameSummary$Frustration, gameSummary$SoA, "Frustration",  "SoA")
+plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$Frustration, "Performance",  "Frustration")
 ```
 
 ```{r Plot boxplots, include=FALSE}
