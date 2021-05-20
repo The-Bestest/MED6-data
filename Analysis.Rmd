@@ -376,10 +376,10 @@ Correlation matrices for all data and per-condition data. Use this to find varia
 # check out this web page on easy summaries for correlations:
 # http://www.sthda.com/english/wiki/correlation-matrix-a-quick-start-guide-to-analyze-format-and-visualize-a-correlation-matrix-using-r-software
 #We need to filter the following columns: Participant, Condition, Order number, activate delay, Sex and BCI 
-filter_out = c(1,14,16,30,31) # columns to filter out
+filter_out = c(1,14,15,16,30,31) # columns to filter out
 
 # Correlation matrix among all of our variables
-chart.Correlation(gameSummary[,-filter_out], histogram=TRUE, pch=19)
+chart.Correlation(gameSummary[,-filter_out], histogram=FALSE, pch=19)
 
 # Data for per-condition correlation matrix among all of our variables
 correlationMatrix <- Hmisc::rcorr(as.matrix(gameSummary[,-filter_out]))
