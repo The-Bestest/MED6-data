@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r Load packages, include=FALSE}
 library(Rmisc) # summarySE
+library(MASS) # polr
 library(tidyverse)
 library(tidymodels)
 library(skimr)
@@ -465,4 +466,25 @@ plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$Frustra
 
 ```{r Plot boxplots, include=FALSE}
 plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label)
+```
+
+### 7. Predicting SoA and Frustration from (perceived) performance (and) condition
+```{r Predict SoA from performance}
+likertScale <- 1:7
+# Dividing data into training and test set
+# Random sampling 
+samplesize = 0.60*nrow(Discrete)
+set.seed(100)
+index = sample(seq_len(nrow(Discrete)), size = samplesize)
+# Creating training and test set 
+datatrain = Discrete[index,]
+datatest = Discrete[-index,]
+
+# Using polr for ordinal regression, as SoA is Likert Scale (no need to treat the data as nominal´)
+model <- polr(factor(SoA, levels = likertScale, ordered = TRUE) ~ ObjectiveSuccesses, data = gameSummary, Hess = TRUE)
+
+predictSoA = predict(model,gameSummary)
+summary(model)
+table(predictSoA, gameSummary$ObjectiveSuccesses)
+mean(as.character(gameSummary$SoA) != as.character(predictSoA))
 ```
