@@ -296,13 +296,13 @@ sexCheck <- gameSummary %>%
 ```{r Counter balancing for parametric data - Randomization check, include=FALSE}
 # Does it matter for actual performance and perceived performance if discrete condition was first?
 parametricCheck <- gameSummary %>%
-  select(ObjectiveSuccesses, PerceivedSuccesses, Condition, orderNumber, Age) %>%
+  select(ObjectiveSuccesses, PerceivedSuccesses, Condition, orderNumber) %>%
   gather(key = variable, value = value, -Condition, -orderNumber) %>%
   group_by(Condition, orderNumber, variable) %>%
   summarise(value=list(value)) %>%
-  spread(orderNumber, value) %>% 
-  group_by(variable)  %>%
+  spread(orderNumber, value) %>%
   rename(order1 = 3, order2 = 4) %>%
+  group_by(Condition, variable)  %>%
   mutate(
     p_value = t.test(unlist(order1), unlist(order2))$p.value,
     statistic = t.test(unlist(order1), unlist(order2))$statistic
