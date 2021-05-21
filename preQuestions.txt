@@ -7,7 +7,7 @@ Q6:	I am very curious how I will perform
 Q7:	I dread that I can embaress myself
 Q8:	I am fully determined to give it my best
 Q9:	I don't need a reward for participating
-Q10:	It's embaressing for me to fail
+Q10:	It's embarassing for me to fail
 Q11:	I think everyone can control their brain activity
 Q12:	I think I won't be able to accomplish the BCI task today
 Q13:	When I do well, I will be proud of my achievement
