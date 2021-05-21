@@ -420,8 +420,14 @@ Investigate the interesting correlations further.
 cor.test(gameSummary$SoA, gameSummary$ObjectiveSuccesses, method="spearman", exact = FALSE)
 cor.test(Discrete$SoA, Discrete$ObjectiveSuccesses, method="spearman", exact = FALSE)
 cor.test(Continuous$SoA, Continuous$ObjectiveSuccesses, method="spearman", exact = FALSE)
+
 cor.test(gameSummary$SoA, gameSummary$Frustration, method="spearman", exact = FALSE)
-cor.test(gameSummary$Frustration, gameSummary$ObjectiveFailures, method="spearman", exact = FALSE)
+cor.test(Discrete$SoA, Discrete$Frustration, method="spearman", exact = FALSE)
+cor.test(Continuous$SoA, Continuous$Frustration, method="spearman", exact = FALSE)
+
+cor.test(gameSummary$Frustration, gameSummary$ObjectiveSuccesses, method="spearman", exact = FALSE)
+cor.test(Discrete$Frustration, Discrete$ObjectiveSuccesses, method="spearman", exact = FALSE)
+cor.test(Continuous$Frustration, Continuous$ObjectiveSuccesses, method="spearman", exact = FALSE)
 
 ```
 
