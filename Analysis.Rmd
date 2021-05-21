@@ -35,6 +35,23 @@ load_bci_data <- function(fileNamePattern, columns) {
     )
 }
 
+predictOrdinal <- function(formula, dataset, predictedVar) {
+  model <- polr(formula, data = dataset, Hess = TRUE)
+
+  predictVariable = predict(model, dataset)
+
+  res <- list(
+    "summary" = summary(model),
+    # p-value for plot
+    # https://stats.stackexchange.com/a/7777/297231
+    # we will have p > 0.05 if the model is a good fit
+    "pValue" = 1-pchisq(deviance(model),df.residual(model)),
+    "misclassificationRate" = mean(as.character(predictedVar) != as.character(predictVariable))
+  )
+
+  res
+}
+
 flattenCorrMatrix <- function(cormat, pmat) {
   ut <- upper.tri(cormat)
   data.frame(
@@ -470,21 +487,28 @@ plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label,
 
 ### 7. Predicting SoA and Frustration from (perceived) performance (and) condition
 ```{r Predict SoA from performance}
+summaryWithoutOutliers <- gameSummary %>% filter(!(Participant == 14))
 likertScale <- 1:7
-# Dividing data into training and test set
-# Random sampling 
-samplesize = 0.60*nrow(Discrete)
-set.seed(100)
-index = sample(seq_len(nrow(Discrete)), size = samplesize)
-# Creating training and test set 
-datatrain = Discrete[index,]
-datatest = Discrete[-index,]
 
-# Using polr for ordinal regression, as SoA is Likert Scale (no need to treat the data as nominal´)
-model <- polr(factor(SoA, levels = likertScale, ordered = TRUE) ~ ObjectiveSuccesses, data = gameSummary, Hess = TRUE)
+# Predict agency from performance
+predictOrdinal(
+  factor(SoA, levels = likertScale, ordered = TRUE) ~ (ObjectiveSuccesses),
+  data = summaryWithoutOutliers,
+  predictedVar = summaryWithoutOutliers$SoA
+)
 
-predictSoA = predict(model,gameSummary)
-summary(model)
-table(predictSoA, gameSummary$ObjectiveSuccesses)
-mean(as.character(gameSummary$SoA) != as.character(predictSoA))
+# Predict frustration from agency
+predictOrdinal(
+  factor(Frustration, levels = likertScale, ordered = TRUE) ~ (SoA),
+  data = summaryWithoutOutliers,
+  predictedVar = summaryWithoutOutliers$Frustration
+)
+
+# Predict frustration from performance
+predictOrdinal(
+  factor(Frustration, levels = likertScale, ordered = TRUE) ~ (ObjectiveSuccesses),
+  data = summaryWithoutOutliers,
+  predictedVar = summaryWithoutOutliers$Frustration
+)
+
 ```
