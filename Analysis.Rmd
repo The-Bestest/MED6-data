@@ -46,7 +46,7 @@ predictOrdinal <- function(formula, dataset, predictedVar) {
     # https://stats.stackexchange.com/a/7777/297231
     # we will have p > 0.05 if the model is a good fit
     "pValue" = 1-pchisq(deviance(model),df.residual(model)),
-    "misclassificationRate" = mean(as.character(predictedVar) != as.character(predictVariable))
+    "classificationRate" = mean(as.character(predictedVar) == as.character(predictVariable))
   )
 
   res
@@ -432,6 +432,7 @@ cor.test(discreteWithoutOutliers$SoA, discreteWithoutOutliers$ObjectiveSuccesses
 cor.test(continuousWithoutOutliers$SoA, continuousWithoutOutliers$ObjectiveSuccesses, method="spearman", exact = FALSE)
 plotCorrelation(summaryWithoutOutliers, summaryWithoutOutliers$ObjectiveSuccesses, summaryWithoutOutliers$SoA, "Performance",  "SoA")
 
+
 cor.test(gameSummary$SoA, gameSummary$Frustration, method="spearman", exact = FALSE)
 cor.test(Discrete$SoA, Discrete$Frustration, method="spearman", exact = FALSE)
 cor.test(Continuous$SoA, Continuous$Frustration, method="spearman", exact = FALSE)
@@ -443,15 +444,26 @@ cor.test(continuousWithoutOutliers$SoA, continuousWithoutOutliers$Frustration, m
 plotCorrelation(summaryWithoutOutliers, summaryWithoutOutliers$Frustration, summaryWithoutOutliers$SoA, "Frustration",  "SoA")
 
 cor.test(gameSummary$Frustration, gameSummary$ObjectiveSuccesses, method="spearman", exact = FALSE)
-cor.test(Discrete$Frustration, Discrete$ObjectiveSuccesses, method="spearman", exact = FALSE)
-cor.test(Continuous$Frustration, Continuous$ObjectiveSuccesses, method="spearman", exact = FALSE)
 plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$Frustration, "Performance",  "Frustration")
 
 cor.test(gameSummary$Frustration, gameSummary$PerceivedSuccesses, method="spearman", exact = FALSE)
-plotCorrelation(gameSummary, gameSummary$Frustration, gameSummary$PerceivedSuccesses, "Frustration",  "PerceivedSuccesses")
+plotCorrelation(gameSummary, gameSummary$Frustration, gameSummary$PerceivedSuccesses, "Frustration",  "erceived Performance")
+
+cor.test(gameSummary$ObjectiveSuccesses, gameSummary$PerceivedSuccesses, method="spearman", exact = FALSE)
+plotCorrelation(gameSummary, gameSummary$ObjectiveSuccesses, gameSummary$PerceivedSuccesses, "Performance",  "Perceived Performance")
 
 cor.test(gameSummary$Q1, gameSummary$MentalEffort, method="spearman", exact = FALSE)
 plotCorrelation(gameSummary, gameSummary$Q1, gameSummary$MentalEffort, "Q1",  "MentalEffort")
+
+cor.test(gameSummary$Q10, gameSummary$MentalEffort, method="spearman", exact = FALSE)
+plotCorrelation(gameSummary, gameSummary$Q10, gameSummary$MentalEffort, "Q10",  "MentalEfort")
+
+cor.test(gameSummary$Q11, gameSummary$MentalEffort, method="spearman", exact = FALSE)
+plotCorrelation(gameSummary, gameSummary$Q11, gameSummary$MentalEffort, "Q11",  "MentalEfort")
+
+cor.test(gameSummary$Q7, gameSummary$Q9, method="spearman", exact = FALSE)
+plotCorrelation(gameSummary, gameSummary$Q7, gameSummary$Q9, "Q7",  "Q9")
+
 
 cor.test(gameSummary$Q7, gameSummary$Q9, method="spearman", exact = FALSE)
 plotCorrelation(gameSummary, gameSummary$Q7, gameSummary$Q9, "Q7",  "Q9")
@@ -508,10 +520,6 @@ hypothesisCheck
 
 
 ### 6. Plotting ground
-
-```{r Plot correlations, include=FALSE}
-
-```
 
 ```{r Plot boxplots, include=FALSE}
 plotBoxplotLikert(gameSummary, gameSummary$SoA, "SoA", "agency", discrete_label, continuous_label)
